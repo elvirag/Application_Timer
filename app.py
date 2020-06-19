@@ -1,8 +1,8 @@
 import configparser
-import ctypes
 import logging
 import os
 import subprocess
+import tkinter as tk
 from time import sleep
 
 from db import actions
@@ -32,12 +32,32 @@ def measure_curr_application_time():
 	return hours * 60 + minutes
 
 
+def counter_label(root, label, i):
+	if i > 0:
+		i -= 1
+		label.config(text=f"{config['basic']['PROCESS_NAME']} will close in {i} seconds")
+		root.after(config['basic'].getint('MAX_OPERATION_TIME') * 100, lambda: counter_label(root, label, i))
+	else:
+		root.destroy()
+
+
 def close_application(time):
 	closing_message_start = f"Sorry, you've been using {config['basic']['PROCESS_NAME']} way too much...\n"
 	closing_message_end = f"It's been {time}min, your limit is: {config['basic'].getint('MAX_OPERATION_TIME')}min!"
 	closing_title = f"{config['basic']['PROCESS_NAME']} will close now."
 
-	ctypes.windll.user32.MessageBoxW(0, closing_message_start + closing_message_end, closing_title, 0)
+	root = tk.Tk()
+	root.attributes("-topmost", True)
+	root.title(closing_title)
+	label = tk.Label(root, fg="blue")
+	label.pack()
+	message = closing_message_start + closing_message_end
+	message = tk.Message(root, text=message, width=300, padx=20, pady=15)
+	message.pack()
+	counter_label(root, label, config['basic'].getint('TIME_TO_DESTROY'))
+	button = tk.Button(root, text='Close', width=25, command=root.destroy)
+	button.pack()
+	root.mainloop()
 	os.system(f"taskkill /im {config['basic']['PROCESS']}.exe")
 
 
