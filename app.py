@@ -13,12 +13,12 @@ def get_pid_application():
 	command_format = "Format-Table Id -HideTableHeaders -ErrorAction SilentlyContinue"
 
 	p = subprocess.Popen(["powershell.exe", command, "|", command_format], stdout=subprocess.PIPE)
-	arena_pid = p.communicate()[0].strip().decode("utf-8")
+	application_pid = p.communicate()[0].strip().decode("utf-8")
 
-	return arena_pid
+	return application_pid
 
 
-def measure_curr_arena_time():
+def measure_curr_application_time():
 	command = f"New-TimeSpan -Start (get-process {config['basic']['PROCESS']}).StartTime"
 	command_format = f"Format-Table Hours, Minutes -HideTableHeaders -ErrorAction SilentlyContinue"
 
@@ -32,7 +32,7 @@ def measure_curr_arena_time():
 	return hours * 60 + minutes
 
 
-def close_arena(time):
+def close_application(time):
 	closing_message_start = f"Sorry, you've been using {config['basic']['PROCESS_NAME']} way too much...\n"
 	closing_message_end = f"It's been {time}min, your limit is: {config['basic'].getint('MAX_OPERATION_TIME')}min!"
 	closing_title = f"{config['basic']['PROCESS_NAME']} will close now."
@@ -43,12 +43,12 @@ def close_arena(time):
 
 def check_max_time(time):
 	if time > config['basic'].getint('MAX_OPERATION_TIME'):
-		close_arena(time)
+		close_application(time)
 
 
 def update_app_time():
 	pid = get_pid_application()
-	time = measure_curr_arena_time()
+	time = measure_curr_application_time()
 	actions.update_entry(pid, time)
 
 
