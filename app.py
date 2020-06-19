@@ -8,7 +8,7 @@ from time import sleep
 from db import actions
 
 
-def get_pid_arena():
+def get_pid_application():
 	command = f"Get-Process {config['basic']['PROCESS']}"
 	command_format = "Format-Table Id -HideTableHeaders -ErrorAction SilentlyContinue"
 
@@ -47,7 +47,7 @@ def check_max_time(time):
 
 
 def update_app_time():
-	pid = get_pid_arena()
+	pid = get_pid_application()
 	time = measure_curr_arena_time()
 	actions.update_entry(pid, time)
 
