@@ -49,7 +49,7 @@ def close_application(time):
 	button = tk.Button(root, text='Close', width=25, command=root.destroy)
 	button.pack()
 	root.mainloop()
-	system(f"taskkill /im {cfg['PROCESS']}.exe")
+	system(f"taskkill /im {cfg['PROCESS']}")
 
 
 def check_max_time(time):
@@ -67,7 +67,7 @@ def main():
 	actions.connect_db()
 	while True:
 		try:
-			process = WMI().Win32_Process(Name="notepad.exe")
+			process = WMI().Win32_Process(Name=cfg['PROCESS'])
 			if not process:
 				logging.info(f"sleeping for {cfg['SLEEP_TIME']} seconds")
 				sleep(cfg.getint('SLEEP_TIME'))
@@ -85,5 +85,5 @@ if __name__ == "__main__":
 	config.read('config.ini')
 	cfg = config['basic']
 	message_format = '%(asctime)s %(levelname)s %(message)s'
-	logging.basicConfig(filename=f"{cfg['PROCESS']}_log.log", level=logging.DEBUG, format=message_format)
+	logging.basicConfig(filename=f"{cfg['PROCESS_NAME']}_log.log", level=logging.DEBUG, format=message_format)
 	main()
