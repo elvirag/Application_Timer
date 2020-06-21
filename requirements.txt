@@ -1,1 +1,2 @@
 sqlalchemy~=1.3.17
+WMI~=1.5.1

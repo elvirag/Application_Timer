@@ -1,35 +1,26 @@
 import logging
 import tkinter as tk
+from _datetime import datetime
 from configparser import ConfigParser
 from os import system
-from subprocess import Popen, PIPE
 from time import sleep
+
+from wmi import WMI
 
 from db import actions
 
 
-def get_pid_application():
-	command = f"Get-Process {cfg['PROCESS']}"
-	command_format = "Format-Table Id -HideTableHeaders -ErrorAction SilentlyContinue"
-
-	p = Popen(["powershell.exe", command, "|", command_format], stdout=PIPE)
-	application_pid = p.communicate()[0].strip().decode("utf-8")
+def get_pid_application(process):
+	application_pid = process.ProcessID
 
 	return application_pid
 
 
-def measure_curr_application_time():
-	command = f"New-TimeSpan -Start (get-process {cfg['PROCESS']}).StartTime"
-	command_format = f"Format-Table Hours, Minutes -HideTableHeaders -ErrorAction SilentlyContinue"
+def measure_curr_application_time(process):
+	process_creation_date = datetime.strptime(process.CreationDate.split(".")[0], "%Y%m%d%H%M%S")
+	delta = datetime.now() - process_creation_date
 
-	p = Popen(["powershell.exe", command, "|", command_format], stdout=PIPE)
-	time = p.communicate()[0]
-	try:
-		hours, minutes = [int(item) for item in time.strip().split()]
-	except ValueError:
-		return 0
-
-	return hours * 60 + minutes
+	return int(delta.seconds / 60)
 
 
 def counter_label(root, label, i):
@@ -66,30 +57,22 @@ def check_max_time(time):
 		close_application(time)
 
 
-def update_app_time():
-	pid = get_pid_application()
-	time = measure_curr_application_time()
+def update_app_time(process):
+	pid = get_pid_application(process)
+	time = measure_curr_application_time(process)
 	actions.update_entry(pid, time)
-
-
-def check_app_status():
-	command = f"get-process {cfg['PROCESS']}"
-	command_format = "-ErrorAction SilentlyContinue"
-	p = Popen(["powershell.exe", command, command_format], stdout=PIPE)
-	output = p.communicate()[0]
-	return output
 
 
 def main():
 	actions.connect_db()
 	while True:
 		try:
-			is_running = check_app_status()
-			if not is_running:
+			process = WMI().Win32_Process(Name="notepad.exe")
+			if not process:
 				logging.info(f"sleeping for {cfg['SLEEP_TIME']} seconds")
 				sleep(cfg.getint('SLEEP_TIME'))
 				continue
-			update_app_time()
+			update_app_time(process[0])
 			total_time = actions.get_total_time()
 			check_max_time(total_time)
 			sleep(cfg.getint('SLEEP_TIME'))
